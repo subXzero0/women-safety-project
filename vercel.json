@@ -3,12 +3,20 @@
     {
       "src": "main.py",
       "use": "@vercel/python"
+    },
+    {
+      "src": "frontend/index.html",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
-      "src": "/(.*)",
+      "src": "/(login|evaluate-route-safety|map-tiles/.*)",
       "dest": "main.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "frontend/index.html"
     }
   ]
 }
