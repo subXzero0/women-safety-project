@@ -8,8 +8,94 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --ink: #f8fafc;
+            --muted: #a7b0c2;
+            --glass: rgba(15, 23, 42, 0.62);
+            --glass-border: rgba(255, 255, 255, 0.14);
+            --accent: #fb7185;
+        }
+
+        .login-screen {
+            background:
+                radial-gradient(circle at 15% 20%, rgba(244, 63, 94, 0.22), transparent 32%),
+                radial-gradient(circle at 85% 80%, rgba(14, 165, 233, 0.2), transparent 30%),
+                #070b16;
+        }
+
+        .login-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 24px 90px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+        }
+
+        .login-input {
+            background: rgba(2, 6, 23, 0.46);
+            border: 1px solid rgba(148, 163, 184, 0.24);
+        }
+
+        .login-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(251, 113, 133, 0.14);
+        }
+    </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans">
+
+    <!-- Prototype login gate -->
+    <section id="loginScreen" class="login-screen fixed inset-0 z-[100] flex items-center justify-center px-5 py-10 overflow-hidden">
+        <div class="absolute -left-24 -top-24 h-72 w-72 rounded-full border border-rose-400/20"></div>
+        <div class="absolute -right-28 -bottom-28 h-96 w-96 rounded-full border border-sky-400/20"></div>
+        <div class="login-card relative w-full max-w-md rounded-[2rem] p-8 sm:p-10">
+            <div class="mb-8 flex items-center gap-3">
+                <div class="rounded-2xl bg-rose-500/90 p-3 text-white shadow-lg shadow-rose-900/40">
+                    <i class="fa-solid fa-shield-halved text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.28em] text-rose-300">HerShield</p>
+                    <h1 class="text-2xl font-semibold tracking-tight text-white">Welcome back</h1>
+                </div>
+            </div>
+            <p class="mb-7 text-sm leading-6 text-slate-300">Sign in to open your private route safety workspace.</p>
+            <div class="mb-7 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                <div class="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-rose-300">
+                    <i class="fa-solid fa-sparkles"></i>
+                    <span>Coming soon</span>
+                </div>
+                <div class="grid gap-2 text-sm text-slate-300 sm:grid-cols-2">
+                    <div class="flex items-center gap-2 rounded-xl bg-slate-950/30 px-3 py-2">
+                        <i class="fa-solid fa-drone-front text-sky-300"></i>
+                        <span>Drone support</span>
+                    </div>
+                    <div class="flex items-center gap-2 rounded-xl bg-slate-950/30 px-3 py-2">
+                        <i class="fa-solid fa-people-group text-emerald-300"></i>
+                        <span>Volunteer network</span>
+                    </div>
+                </div>
+            </div>
+            <form id="loginForm" onsubmit="login(event)" class="space-y-4">
+                <label class="block text-sm text-slate-300">
+                    Username
+                    <input id="loginUsername" name="username" autocomplete="username" required class="login-input mt-2 w-full rounded-xl px-4 py-3 text-white outline-none transition" placeholder="Enter username">
+                </label>
+                <label class="block text-sm text-slate-300">
+                    Password
+                    <input id="loginPassword" name="password" type="password" autocomplete="current-password" required class="login-input mt-2 w-full rounded-xl px-4 py-3 text-white outline-none transition" placeholder="Enter password">
+                </label>
+                <p id="loginError" class="hidden rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200"></p>
+                <button id="loginButton" type="submit" class="w-full rounded-xl bg-rose-500 px-4 py-3 font-semibold text-white shadow-lg shadow-rose-900/30 transition hover:bg-rose-400 disabled:cursor-wait disabled:opacity-60">
+                    <i class="fa-solid fa-arrow-right-to-bracket mr-2"></i>Enter workspace
+                </button>
+            </form>
+            <div class="mt-7 border-t border-white/10 pt-5 text-xs text-slate-400">
+                <span class="font-semibold text-slate-300">Demo access</span>
+                <span class="ml-2 font-mono text-rose-300">demo / HerShield123!</span>
+            </div>
+        </div>
+    </section>
 
     <!-- Top Navigation Header -->
     <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50 px-6 py-4 flex items-center justify-between shadow-md">
@@ -30,6 +116,9 @@
             </button>
             <button onclick="toggleSettings()" class="bg-slate-800 hover:bg-slate-700 p-2.5 rounded-xl text-slate-300 transition">
                 <i class="fa-solid fa-gear text-lg"></i>
+            </button>
+            <button onclick="logout()" class="bg-slate-800 hover:bg-slate-700 p-2.5 rounded-xl text-slate-300 transition" title="Log out">
+                <i class="fa-solid fa-arrow-right-from-bracket text-lg"></i>
             </button>
         </div>
     </header>
@@ -187,10 +276,6 @@
                     <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Backend API URL</label>
                     <input type="text" id="backendUrlInput" value="http://127.0.0.1:8000" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-rose-500">
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">CARTO Map Tile Key</label>
-                    <input type="text" id="cartoKeyInput" value="cb1_4sla_1_129337b74b70c16a6ac53636" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-rose-500">
-                </div>
                 <button onclick="saveSettings()" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-semibold py-2.5 rounded-xl transition">Save Settings</button>
             </div>
         </div>
@@ -198,10 +283,9 @@
 
     <!-- Script Logic -->
     <script>
-        const cartoKey = localStorage.getItem('hershield_carto_key') || 'cb1_4sla_1_129337b74b70c16a6ac53636';
-
         const map = L.map('map').setView([28.6139, 77.2090], 13);
-        L.tileLayer(`https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=${cartoKey}`, {
+        const mapBackendUrl = localStorage.getItem('hershield_backend') || 'http://127.0.0.1:8000';
+        L.tileLayer(`${mapBackendUrl}/map-tiles/{z}/{x}/{y}.png`, {
             attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
             maxZoom: 19
         }).addTo(map);
@@ -212,10 +296,58 @@
         let evaluatedRoutesGlobal = [];
 
         if (!localStorage.getItem('hershield_backend')) {
-            localStorage.setItem('hershield_backend', 'http://127.0.0.1:8000');
+            const isLocalFrontend = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+            localStorage.setItem('hershield_backend', isLocalFrontend ? 'http://127.0.0.1:8000' : window.location.origin);
         }
 
         loadEmergencyContacts();
+        checkStoredSession();
+
+        function getBackendUrl() {
+            return localStorage.getItem('hershield_backend') || 'http://127.0.0.1:8000';
+        }
+
+        function showLoginScreen() {
+            document.getElementById('loginScreen').classList.remove('hidden');
+        }
+
+        function hideLoginScreen() {
+            document.getElementById('loginScreen').classList.add('hidden');
+        }
+
+        function checkStoredSession() {
+            if (localStorage.getItem('hershield_access_token')) {
+                hideLoginScreen();
+            }
+        }
+
+        async function login(event) {
+            event.preventDefault();
+            const button = document.getElementById('loginButton');
+            const error = document.getElementById('loginError');
+            error.classList.add('hidden');
+            button.disabled = true;
+
+            try {
+                const response = await fetch(`${getBackendUrl()}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: document.getElementById('loginUsername').value.trim(),
+                        password: document.getElementById('loginPassword').value
+                    })
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.detail || 'Login failed.');
+                localStorage.setItem('hershield_access_token', data.access_token);
+                hideLoginScreen();
+            } catch (err) {
+                error.textContent = err.message;
+                error.classList.remove('hidden');
+            } finally {
+                button.disabled = false;
+            }
+        }
 
         function toggleContactModal() {
             document.getElementById('contactModal').classList.toggle('hidden');
@@ -230,9 +362,9 @@
                 return;
             }
 
-            let contacts = JSON.parse(localStorage.getItem('hershield_contacts') || '[]');
+            let contacts = readContacts();
             contacts.push({ name, phone });
-            localStorage.setItem('hershield_contacts', JSON.stringify(contacts));
+            writeContacts(contacts);
 
             document.getElementById('contactNameInput').value = "";
             document.getElementById('contactPhoneInput').value = "";
@@ -245,44 +377,85 @@
             const list = document.getElementById('contactsList');
             if (!list) return;
 
-            let html = `
-                <div class="flex justify-between items-center bg-slate-950 px-3 py-2 rounded-xl border border-slate-800">
-                    <div>
-                        <span class="font-semibold text-white">National Emergency</span>
-                        <span class="font-mono text-rose-400 block">112</span>
-                    </div>
-                    <a href="tel:112" class="bg-red-600/20 hover:bg-red-600/40 text-red-400 px-3 py-1 rounded-lg text-xs font-bold transition flex items-center space-x-1">
-                        <i class="fa-solid fa-phone"></i><span>Call</span>
-                    </a>
-                </div>
-            `;
-            
-            let contacts = JSON.parse(localStorage.getItem('hershield_contacts') || '[]');
-            contacts.forEach((c, index) => {
-                html += `
-                    <div class="flex justify-between items-center bg-slate-950 px-3 py-2 rounded-xl border border-slate-800 text-xs">
-                        <div>
-                            <span class="font-semibold text-white">${c.name}</span>
-                            <span class="font-mono text-rose-400 block">${c.phone}</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <button onclick="sendWhatsAppToContact('${c.phone}')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 px-2.5 py-1 rounded-lg font-bold transition" title="Send Live Location on WhatsApp">
-                                <i class="fa-brands fa-whatsapp"></i>
-                            </button>
-                            <button onclick="deleteContact(${index})" class="text-slate-500 hover:text-red-400 transition p-1" title="Remove">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
+            list.replaceChildren();
+
+            const emergencyRow = document.createElement('div');
+            emergencyRow.className = 'flex justify-between items-center bg-slate-950 px-3 py-2 rounded-xl border border-slate-800';
+            emergencyRow.innerHTML = '<div><span class="font-semibold text-white">National Emergency</span><span class="font-mono text-rose-400 block">112</span></div><a href="tel:112" class="bg-red-600/20 hover:bg-red-600/40 text-red-400 px-3 py-1 rounded-lg text-xs font-bold transition flex items-center space-x-1"><i class="fa-solid fa-phone"></i><span>Call</span></a>';
+            list.appendChild(emergencyRow);
+
+            readContacts().forEach((contact, index) => {
+                const row = document.createElement('div');
+                row.className = 'flex justify-between items-center bg-slate-950 px-3 py-2 rounded-xl border border-slate-800 text-xs';
+
+                const details = document.createElement('div');
+                const name = document.createElement('span');
+                name.className = 'font-semibold text-white';
+                name.textContent = contact.name;
+                const phone = document.createElement('span');
+                phone.className = 'font-mono text-rose-400 block';
+                phone.textContent = contact.phone;
+                details.append(name, phone);
+
+                const actions = document.createElement('div');
+                actions.className = 'flex items-center space-x-2';
+                const whatsappButton = document.createElement('button');
+                whatsappButton.className = 'bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 px-2.5 py-1 rounded-lg font-bold transition';
+                whatsappButton.title = 'Send Live Location on WhatsApp';
+                whatsappButton.innerHTML = '<i class="fa-brands fa-whatsapp"></i>';
+                whatsappButton.addEventListener('click', () => sendWhatsAppToContact(contact.phone));
+                const deleteButton = document.createElement('button');
+                deleteButton.className = 'text-slate-500 hover:text-red-400 transition p-1';
+                deleteButton.title = 'Remove';
+                deleteButton.innerHTML = '<i class="fa-solid fa-trash"></i>';
+                deleteButton.addEventListener('click', () => deleteContact(index));
+                actions.append(whatsappButton, deleteButton);
+
+                row.append(details, actions);
+                list.appendChild(row);
             });
-            list.innerHTML = html;
+        }
+
+        function encodeContacts(contacts) {
+            const bytes = new TextEncoder().encode(JSON.stringify(contacts));
+            let binary = '';
+            bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+            return btoa(binary);
+        }
+
+        function decodeContacts(value) {
+            const binary = atob(value);
+            const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+            return JSON.parse(new TextDecoder().decode(bytes));
+        }
+
+        function readContacts() {
+            const stored = localStorage.getItem('hershield_contacts');
+            if (!stored) return [];
+
+            try {
+                return decodeContacts(stored);
+            } catch {
+                try {
+                    const legacyContacts = JSON.parse(stored);
+                    if (!Array.isArray(legacyContacts)) return [];
+                    writeContacts(legacyContacts);
+                    return legacyContacts;
+                } catch {
+                    localStorage.removeItem('hershield_contacts');
+                    return [];
+                }
+            }
+        }
+
+        function writeContacts(contacts) {
+            localStorage.setItem('hershield_contacts', encodeContacts(contacts));
         }
 
         function deleteContact(index) {
-            let contacts = JSON.parse(localStorage.getItem('hershield_contacts') || '[]');
+            let contacts = readContacts();
             contacts.splice(index, 1);
-            localStorage.setItem('hershield_contacts', JSON.stringify(contacts));
+            writeContacts(contacts);
             loadEmergencyContacts();
         }
 
@@ -348,9 +521,13 @@
             document.getElementById('settingsModal').classList.toggle('hidden');
         }
 
+        function logout() {
+            localStorage.removeItem('hershield_access_token');
+            showLoginScreen();
+        }
+
         function saveSettings() {
             localStorage.setItem('hershield_backend', document.getElementById('backendUrlInput').value);
-            localStorage.setItem('hershield_carto_key', document.getElementById('cartoKeyInput').value);
             toggleSettings();
             alert('Settings saved!');
             location.reload();
@@ -365,7 +542,7 @@
                         const mapLink = `https://maps.google.com/?q=${lat},${lon}`;
                         const message = `🚨 EMERGENCY! I am in danger and need immediate assistance! My current live location is: ${mapLink}`;
 
-                        const contacts = JSON.parse(localStorage.getItem('hershield_contacts') || '[]');
+                        const contacts = readContacts();
                         if (contacts.length > 0) {
                             const cleanPhone = contacts[0].phone.replace(/[^0-9+]/g, '');
                             window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`, '_blank');
@@ -381,7 +558,8 @@
         async function evaluateRoute() {
             const origin = document.getElementById('originInput').value;
             const destination = document.getElementById('destinationInput').value;
-            const backendUrl = localStorage.getItem('hershield_backend') || 'http://127.0.0.1:8000';
+            const backendUrl = getBackendUrl();
+            const accessToken = localStorage.getItem('hershield_access_token');
 
             if (!origin || !destination) {
                 alert('Please enter both origin and destination.');
@@ -395,10 +573,18 @@
             try {
                 const response = await fetch(`${backendUrl}/evaluate-route-safety`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
                     body: JSON.stringify({ origin, destination })
                 });
 
+                if (response.status === 401) {
+                    localStorage.removeItem('hershield_access_token');
+                    showLoginScreen();
+                    throw new Error('Your session expired. Please sign in again.');
+                }
                 if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
 
                 const data = await response.json();

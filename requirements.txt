@@ -1,0 +1,4 @@
+fastapi
+polyline
+python-dotenv
+requests
