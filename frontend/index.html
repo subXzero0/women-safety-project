@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerShield - Advanced Women Safety & Risk Mitigation Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50 px-6 py-4 flex items-center justify-between shadow-md">
+        <div class="flex items-center space-x-3">
+            <div class="bg-rose-600 p-2 rounded-xl text-white shadow-lg shadow-rose-600/30">
+                <i class="fa-solid fa-shield-halved text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-wide text-white">HerShield</h1>
+                <p class="text-xs text-rose-400 font-medium">Smart Women Safety & Risk Mitigation Engine</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+            <button onclick="triggerSOS()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl shadow-lg shadow-red-600/40 flex items-center space-x-2 transition animate-pulse">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>SOS 112 DISPATCH</span>
+            </button>
+            <button onclick="toggleSettings()" class="bg-slate-800 hover:bg-slate-700 p-2.5 rounded-xl text-slate-300 transition">
+                <i class="fa-solid fa-gear text-lg"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left Panel -->
+        <div class="lg:col-span-1 flex flex-col space-y-6">
+            
+            <!-- Route Form Card -->
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center">
+                    <i class="fa-solid fa-route text-rose-500 mr-2"></i> Route Safety Navigator
+                </h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Origin / Starting Point</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500"><i class="fa-solid fa-location-dot"></i></span>
+                            <input type="text" id="originInput" list="locationSuggestions" placeholder="e.g., Connaught Place, New Delhi" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-10 py-2.5 text-sm text-white focus:outline-none focus:border-rose-500 transition">
+                            <button onclick="useCurrentLocation()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-rose-500 transition" title="Use Current GPS Location">
+                                <i class="fa-solid fa-crosshairs text-base"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Destination</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500"><i class="fa-solid fa-flag-checkered"></i></span>
+                            <input type="text" id="destinationInput" list="locationSuggestions" placeholder="e.g., India Gate, New Delhi" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-rose-500 transition">
+                        </div>
+                    </div>
+
+                    <datalist id="locationSuggestions">
+                        <option value="Connaught Place, New Delhi">
+                        <option value="India Gate, New Delhi">
+                        <option value="Rajiv Chowk Metro Station">
+                        <option value="Khan Market, New Delhi">
+                        <option value="Select Citywalk Mall, Saket">
+                        <option value="Cyber Hub, Gurugram">
+                        <option value="MG Road, Gurgaon">
+                    </datalist>
+
+                    <button onclick="evaluateRoute()" id="evaluateBtn" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-semibold py-3 rounded-xl shadow-lg shadow-rose-600/30 transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-shield-cat"></i>
+                        <span>Calculate & Compare Route Safety</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Alternative Routes Selection Card -->
+            <div id="routesSelectionCard" class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl hidden space-y-3">
+                <h3 class="text-sm font-semibold uppercase text-slate-400"><i class="fa-solid fa-code-fork text-rose-500 mr-1"></i> Available Routes & Recommendations</h3>
+                <div id="routesListContainer" class="space-y-2"></div>
+            </div>
+
+            <!-- Risk Analysis Scorecard -->
+            <div id="riskCard" class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl hidden space-y-4">
+                <h3 class="text-sm font-semibold uppercase text-slate-400">Selected Route Risk Assessment</h3>
+                
+                <div class="flex items-center justify-between bg-slate-950 p-4 rounded-xl border border-slate-800">
+                    <div>
+                        <span id="riskCategoryBadge" class="text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Low Risk</span>
+                        <h4 id="totalDistanceText" class="text-xs text-slate-400 mt-2">Distance: 0 km</h4>
+                    </div>
+                    <div class="text-right">
+                        <span id="riskScoreValue" class="text-3xl font-extrabold text-white">0</span>
+                        <span class="text-xs text-slate-500 block">/ 100 Risk Score</span>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-xs font-semibold uppercase text-slate-400 mb-2">Multi-Factor Risk Breakdown</h4>
+                    <div class="space-y-2 text-xs text-slate-300">
+                        <div class="flex justify-between bg-slate-950 px-3 py-2 rounded-lg">
+                            <span>Lighting Deficit Risk</span>
+                            <span id="breakdownLighting" class="font-bold text-white">0.0</span>
+                        </div>
+                        <div class="flex justify-between bg-slate-950 px-3 py-2 rounded-lg">
+                            <span>Police Crime Rating Factor</span>
+                            <span id="breakdownCrime" class="font-bold text-white">0.0</span>
+                        </div>
+                        <div class="flex justify-between bg-slate-950 px-3 py-2 rounded-lg">
+                            <span>Isolation / Crowd Factor</span>
+                            <span id="breakdownIsolation" class="font-bold text-white">0.0</span>
+                        </div>
+                        <div class="flex justify-between bg-slate-950 px-3 py-2 rounded-lg">
+                            <span>Cellular Blind Spots</span>
+                            <span id="breakdownNetwork" class="font-bold text-white">0.0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-xs font-semibold uppercase text-slate-400 mb-2"><i class="fa-solid fa-comments text-rose-500 mr-1"></i> User Feedback & Warnings</h4>
+                    <div id="feedbackContainer" class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2 text-xs text-slate-300">
+                        <p class="text-slate-500 italic">No user reports for this path yet.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emergency Contacts Card -->
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-semibold uppercase text-slate-400">Emergency Contacts</h3>
+                    <button onclick="toggleContactModal()" class="text-xs text-rose-400 hover:text-rose-300 font-semibold"><i class="fa-solid fa-plus mr-1"></i> Add</button>
+                </div>
+                <div id="contactsList" class="space-y-2 text-sm max-h-48 overflow-y-auto pr-1"></div>
+            </div>
+
+        </div>
+
+        <!-- Right Panel: Map -->
+        <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden flex flex-col min-h-[500px]">
+            <div class="bg-slate-900/80 px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400"><i class="fa-solid fa-map-location-dot mr-1 text-rose-500"></i> Interactive Route Map & Alternatives</span>
+                <span id="mapStatusText" class="text-xs text-emerald-400 font-medium">Ready</span>
+            </div>
+            <div id="map" class="flex-1 w-full h-full z-10"></div>
+        </div>
+
+    </main>
+
+    <!-- Add Contact Modal -->
+    <div id="contactModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-md p-6 rounded-2xl shadow-2xl relative">
+            <button onclick="toggleContactModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h3 class="text-lg font-bold text-white mb-4">Add Emergency Contact</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Contact Name</label>
+                    <input type="text" id="contactNameInput" placeholder="e.g., Mom / Sister / Friend" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-rose-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Phone Number (with Country Code)</label>
+                    <input type="text" id="contactPhoneInput" placeholder="e.g., +919876543210" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-rose-500">
+                </div>
+                <button onclick="saveNewContact()" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-semibold py-2.5 rounded-xl transition">Save Contact</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-md p-6 rounded-2xl shadow-2xl relative">
+            <button onclick="toggleSettings()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h3 class="text-lg font-bold text-white mb-4">Configuration Settings</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Backend API URL</label>
+                    <input type="text" id="backendUrlInput" value="http://127.0.0.1:8000" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-rose-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">CARTO Map Tile Key</label>
+                    <input type="text" id="cartoKeyInput" value="cb1_4sla_1_129337b74b70c16a6ac53636" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-rose-500">
+                </div>
+                <button onclick="saveSettings()" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-semibold py-2.5 rounded-xl transition">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Logic -->
+    <script>
+        const cartoKey = localStorage.getItem('hershield_carto_key') || 'cb1_4sla_1_129337b74b70c16a6ac53636';
+
+        const map = L.map('map').setView([28.6139, 77.2090], 13);
+        L.tileLayer(`https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=${cartoKey}`, {
+            attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+            maxZoom: 19
+        }).addTo(map);
+
+        let activeRouteLayers = [];
+        let startMarker = null;
+        let endMarker = null;
+        let evaluatedRoutesGlobal = [];
+
+        if (!localStorage.getItem('hershield_backend')) {
+            localStorage.setItem('hershield_backend', 'http://127.0.0.1:8000');
+        }
+
+        loadEmergencyContacts();
+
+        function toggleContactModal() {
+            document.getElementById('contactModal').classList.toggle('hidden');
+        }
+
+        function saveNewContact() {
+            const name = document.getElementById('contactNameInput').value.trim();
+            const phone = document.getElementById('contactPhoneInput').value.trim();
+
+            if (!name || !phone) {
+                alert("Please enter both name and phone number.");
+                return;
+            }
+
+            let contacts = JSON.parse(localStorage.getItem('hershield_contacts') || '[]');
+            contacts.push({ name, phone });
+            localStorage.setItem('hershield_contacts', JSON.stringify(contacts));
+
+            document.getElementById('contactNameInput').value = "";
+            document.getElementById('contactPhoneInput').value = "";
+            toggleContactModal();
+
+            loadEmergencyContacts();
+        }
+
+        function loadEmergencyContacts() {
+            const list = document.getElementById('contactsList');
+            if (!list) return;
+
+            let html = `
+                <div class="flex justify-between items-center bg-slate-950 px-3 py-2 rounded-xl border border-slate-800">
+                    <div>
+                        <span class="font-semibold text-white">National Emergency</span>
+                        <span class="font-mono text-rose-400 block">112</span>
+                    </div>
+                    <a href="tel:112" class="bg-red-600/20 hover:bg-red-600/40 text-red-400 px-3 py-1 rounded-lg text-xs font-bold transition flex items-center space-x-1">
+                        <i class="fa-solid fa-phone"></i><span>Call</span>
+                    </a>
+                </div>
+            `;
+            
+            let contacts = JSON.parse(localStorage.getItem('hershield_contacts') || '[]');
+            contacts.forEach((c, index) => {
+                html += `
+                    <div class="flex justify-between items-center bg-slate-950 px-3 py-2 rounded-xl border border-slate-800 text-xs">
+                        <div>
+                            <span class="font-semibold text-white">${c.name}</span>
+                            <span class="font-mono text-rose-400 block">${c.phone}</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="sendWhatsAppToContact('${c.phone}')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 px-2.5 py-1 rounded-lg font-bold transition" title="Send Live Location on WhatsApp">
+                                <i class="fa-brands fa-whatsapp"></i>
+                            </button>
+                            <button onclick="deleteContact(${index})" class="text-slate-500 hover:text-red-400 transition p-1" title="Remove">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            list.innerHTML = html;
+        }
+
+        function deleteContact(index) {
+            let contacts = JSON.parse(localStorage.getItem('hershield_contacts') || '[]');
+            contacts.splice(index, 1);
+            localStorage.setItem('hershield_contacts', JSON.stringify(contacts));
+            loadEmergencyContacts();
+        }
+
+        function sendWhatsAppToContact(phone) {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+                    const mapLink = `https://maps.google.com/?q=${lat},${lon}`;
+                    const message = `🚨 EMERGENCY! I need immediate help! My live GPS location is: ${mapLink}`;
+                    const cleanPhone = phone.replace(/[^0-9+]/g, '');
+                    window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`, '_blank');
+                }, () => { alert("Unable to retrieve GPS coordinates."); });
+            } else {
+                alert("Geolocation not supported.");
+            }
+        }
+
+        function useCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        document.getElementById('originInput').value = `${lat},${lon}`;
+                        alert("📍 Current GPS location loaded successfully!");
+                    },
+                    (error) => { alert("Unable to retrieve location: " + error.message); }
+                );
+            } else {
+                alert("Geolocation is not supported by your browser.");
+            }
+        }
+
+        function decodePolyline(encoded) {
+            let points = [];
+            let index = 0, len = encoded.length;
+            let lat = 0, lng = 0;
+            while (index < len) {
+                let b, shift = 0, result = 0;
+                do {
+                    b = encoded.charCodeAt(index++) - 63;
+                    result |= (b & 0x1f) << shift;
+                    shift += 5;
+                } while (b >= 0x20);
+                let dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
+                lat += dlat;
+                shift = 0;
+                result = 0;
+                do {
+                    b = encoded.charCodeAt(index++) - 63;
+                    result |= (b & 0x1f) << shift;
+                    shift += 5;
+                } while (b >= 0x20);
+                let dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
+                lng += dlng;
+                points.push([lat / 1e5, lng / 1e5]);
+            }
+            return points;
+        }
+
+        function toggleSettings() {
+            document.getElementById('settingsModal').classList.toggle('hidden');
+        }
+
+        function saveSettings() {
+            localStorage.setItem('hershield_backend', document.getElementById('backendUrlInput').value);
+            localStorage.setItem('hershield_carto_key', document.getElementById('cartoKeyInput').value);
+            toggleSettings();
+            alert('Settings saved!');
+            location.reload();
+        }
+
+        function triggerSOS() {
+            if (confirm("🚨 EMERGENCY ALERT: This will fetch your live GPS location, open WhatsApp for your primary contact, and dial 112. Proceed?")) {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition((pos) => {
+                        const lat = pos.coords.latitude;
+                        const lon = pos.coords.longitude;
+                        const mapLink = `https://maps.google.com/?q=${lat},${lon}`;
+                        const message = `🚨 EMERGENCY! I am in danger and need immediate assistance! My current live location is: ${mapLink}`;
+
+                        const contacts = JSON.parse(localStorage.getItem('hershield_contacts') || '[]');
+                        if (contacts.length > 0) {
+                            const cleanPhone = contacts[0].phone.replace(/[^0-9+]/g, '');
+                            window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`, '_blank');
+                        }
+                        window.location.href = "tel:112";
+                    }, () => { window.location.href = "tel:112"; });
+                } else {
+                    window.location.href = "tel:112";
+                }
+            }
+        }
+
+        async function evaluateRoute() {
+            const origin = document.getElementById('originInput').value;
+            const destination = document.getElementById('destinationInput').value;
+            const backendUrl = localStorage.getItem('hershield_backend') || 'http://127.0.0.1:8000';
+
+            if (!origin || !destination) {
+                alert('Please enter both origin and destination.');
+                return;
+            }
+
+            const btn = document.getElementById('evaluateBtn');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin mr-2"></i> Calculating All Routes & Risks...`;
+
+            try {
+                const response = await fetch(`${backendUrl}/evaluate-route-safety`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ origin, destination })
+                });
+
+                if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
+
+                const data = await response.json();
+                evaluatedRoutesGlobal = data.routes;
+
+                renderRoutesList(evaluatedRoutesGlobal);
+                if (evaluatedRoutesGlobal.length > 0) {
+                    selectRoute(0);
+                }
+
+            } catch (err) {
+                alert(`Failed to connect to backend: ${err.message}. Make sure FastAPI is running.`);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-shield-cat mr-2"></i> Calculate & Compare Route Safety`;
+            }
+        }
+
+        function renderRoutesList(routes) {
+            const container = document.getElementById('routesListContainer');
+            container.innerHTML = "";
+            document.getElementById('routesSelectionCard').classList.remove('hidden');
+
+            routes.forEach((r, index) => {
+                const isSafest = r.is_recommended;
+                const risk = r.safety_analysis.risk_score;
+                const dist = (r.safety_analysis.total_distance_meters / 1000).toFixed(2);
+                
+                const div = document.createElement('div');
+                div.className = `p-3 rounded-xl border cursor-pointer transition flex items-center justify-between ${isSafest ? 'bg-emerald-950/40 border-emerald-500/50' : 'bg-slate-950 border-slate-800 hover:border-slate-700'}`;
+                div.onclick = () => selectRoute(index);
+                
+                div.innerHTML = `
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span class="font-bold text-sm text-white">Route #${r.route_id}</span>
+                            ${isSafest ? '<span class="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">✨ SAFEST RECOMMENDED</span>' : ''}
+                        </div>
+                        <span class="text-xs text-slate-400">Distance: ${dist} km</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-lg font-extrabold ${risk < 30 ? 'text-emerald-400' : (risk < 65 ? 'text-amber-400' : 'text-rose-400')}">${risk}</span>
+                        <span class="text-[10px] text-slate-500 block">Risk Score</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function selectRoute(index) {
+            const routeObj = evaluatedRoutesGlobal[index];
+            const analysis = routeObj.safety_analysis;
+
+            document.getElementById('riskCard').classList.remove('hidden');
+            document.getElementById('riskScoreValue').innerText = analysis.risk_score;
+            document.getElementById('totalDistanceText').innerText = `Distance: ${(analysis.total_distance_meters / 1000).toFixed(2)} km`;
+            
+            const badge = document.getElementById('riskCategoryBadge');
+            badge.innerText = analysis.risk_category;
+            badge.className = analysis.risk_score < 30 ? "text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : (analysis.risk_score < 65 ? "text-xs font-bold px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30" : "text-xs font-bold px-3 py-1 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30");
+
+            document.getElementById('breakdownLighting').innerText = analysis.risk_breakdown.lighting_risk_factor;
+            document.getElementById('breakdownCrime').innerText = analysis.risk_breakdown.police_crime_rating_factor;
+            document.getElementById('breakdownIsolation').innerText = analysis.risk_breakdown.isolation_factor;
+            document.getElementById('breakdownNetwork').innerText = analysis.risk_breakdown.connectivity_blind_spot_factor;
+
+            const feedbackContainer = document.getElementById('feedbackContainer');
+            feedbackContainer.innerHTML = "";
+            analysis.user_feedback_summary.forEach(fb => {
+                const p = document.createElement('div');
+                p.className = "bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800 text-slate-200 flex items-center space-x-2";
+                p.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-400 text-[10px]"></i><span>${fb}</span>`;
+                feedbackContainer.appendChild(p);
+            });
+
+            activeRouteLayers.forEach(layer => map.removeLayer(layer));
+            activeRouteLayers = [];
+            if (startMarker) map.removeLayer(startMarker);
+            if (endMarker) map.removeLayer(endMarker);
+
+            evaluatedRoutesGlobal.forEach((r, i) => {
+                const coords = decodePolyline(r.encoded_polyline);
+                const isSelected = i === index;
+                const color = r.safety_analysis.risk_score < 30 ? '#10b981' : (r.safety_analysis.risk_score < 65 ? '#f59e0b' : '#f43f5e');
+                
+                const polylineLayer = L.polyline(coords, {
+                    color: color,
+                    weight: isSelected ? 7 : 3,
+                    opacity: isSelected ? 1.0 : 0.4
+                }).addTo(map);
+
+                polylineLayer.bindPopup(`<b>Route #${r.route_id}</b><br>Risk Score: ${r.safety_analysis.risk_score}/100`);
+                activeRouteLayers.push(polylineLayer);
+
+                if (isSelected) {
+                    startMarker = L.marker(coords[0]).addTo(map).bindPopup("<b>Origin</b>").openPopup();
+                    endMarker = L.marker(coords[coords.length - 1]).addTo(map).bindPopup("<b>Destination</b>");
+                    map.fitBounds(polylineLayer.getBounds(), { padding: [50, 50] });
+                }
+            });
+        }
+    </script>
+</body>
+</html>
